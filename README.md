@@ -42,3 +42,4 @@ See [PRIVACY.md](PRIVACY.md). Not affiliated with DonutSMP.
 3. Set the environment variable `DISCORD_TOKEN` in the panel (or put it in a `.env` file).
 4. Install command: `npm install --omit=dev`  •  Start command: `node src/index.js`
 5. Keep the `data/` folder when updating. It holds settings and giveaways.
+# Donutgw
