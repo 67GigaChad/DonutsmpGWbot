@@ -7,15 +7,15 @@ Public Discord giveaway bot for DonutSMP servers.
 - **IGN entries**: one saved IGN per player, no duplicate IGNs per giveaway
 - **Per-server config via slash commands**, no config files
 
-## Self-host (Arch Linux)
+## Self-host
 
 ```bash
-git clone <your-repo-url> && cd donut-giveaway-bot
-./setup.sh <BOT_TOKEN> --service     # installs node, saves token, runs as a systemd user service
+npm install --omit=dev
+# put your bot token in .env  ->  DISCORD_TOKEN=your_token
+npm start
 ```
 
-Without `--service`, run `npm start`. The invite link is printed on startup and in the logs.
-Create the bot at https://discord.com/developers/applications (no privileged intents needed) and turn on **Public Bot** if you want others to add it.
+The invite link is printed on startup. Create the bot at https://discord.com/developers/applications (no privileged intents needed) and turn on **Public Bot** if you want others to add it.
 
 ## Commands
 
@@ -42,4 +42,3 @@ See [PRIVACY.md](PRIVACY.md). Not affiliated with DonutSMP.
 3. Set the environment variable `DISCORD_TOKEN` in the panel (or put it in a `.env` file).
 4. Install command: `npm install --omit=dev`  •  Start command: `node src/index.js`
 5. Keep the `data/` folder when updating. It holds settings and giveaways.
-# Donutgw
