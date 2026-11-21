@@ -9,12 +9,25 @@ export function load() {
   if (fs.existsSync(FILE)) Object.assign(db, JSON.parse(fs.readFileSync(FILE, 'utf8')));
 }
 
+function write() {
+  const tmp = FILE + '.tmp';
+  fs.writeFileSync(tmp, JSON.stringify(db, null, 2));
+  fs.renameSync(tmp, FILE);
+}
+
 let t = null;
 export function save() {
   clearTimeout(t);
   t = setTimeout(() => {
-    const tmp = FILE + '.tmp';
-    fs.writeFileSync(tmp, JSON.stringify(db, null, 2));
-    fs.renameSync(tmp, FILE);
+    t = null;
+    write();
   }, 150);
+}
+
+// Write pending changes immediately (used on shutdown: hosting panels send SIGTERM).
+export function flush() {
+  if (!t) return;
+  clearTimeout(t);
+  t = null;
+  write();
 }

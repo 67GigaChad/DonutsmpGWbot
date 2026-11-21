@@ -17,6 +17,17 @@ npm start
 
 The invite link is printed on startup. Create the bot at https://discord.com/developers/applications (no privileged intents needed) and turn on **Public Bot** if you want others to add it.
 
+## Deploy on Render (free tier)
+
+The bot runs a tiny health server on `PORT`, so it can be a **Web Service**:
+
+1. Push this repo to GitHub, then on Render: **New → Blueprint** and pick the repo (`render.yaml` is included). Or **New → Web Service** manually.
+2. Build command `npm install --omit=dev`, start command `npm start`, health check path `/health`.
+3. Set `DISCORD_TOKEN` in the dashboard (never commit it).
+4. The bot self-pings `RENDER_EXTERNAL_URL` every 10 min so the free instance doesn't spin down after 15 min idle. For extra safety, point a free uptime monitor (UptimeRobot, cron-job.org) at `https://your-service.onrender.com/health` every 5–10 min.
+
+⚠️ Render's filesystem is ephemeral: `data/db.json` (server settings, saved IGNs, running giveaways) is wiped on every deploy or restart. Attach a persistent disk mounted at `/opt/render/project/src/data` on a paid instance to keep it.
+
 ## Commands
 
 | Command | What it does |

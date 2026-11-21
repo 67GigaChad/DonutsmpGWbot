@@ -8,11 +8,16 @@ import { GUILD_ID, TOKEN, DONUT, EMOJI, COLORS } from './config.js';
 import * as store from './store.js';
 import { parseDuration, shuffle, isMoney, IGN_RE } from './util.js';
 import { spin } from './roulette.js';
+import { startServer, startKeepAlive } from './server.js';
 
 const EPH = MessageFlags.Ephemeral;
 const client = new Client({ intents: [GatewayIntentBits.Guilds], allowedMentions: { parse: [] } });
 store.load();
 const db = store.db;
+
+// Health endpoint for Render/hosting panels (and to keep a free instance awake).
+startServer(() => ({ bot: client.isReady() ? client.user.tag : null, giveaways: Object.keys(db.giveaways).length }));
+startKeepAlive();
 const busy = new Set();
 
 /* ───────────────────────── commands ───────────────────────── */
@@ -541,4 +546,14 @@ client.on('guildDelete', (guild) => {
 });
 
 process.on('unhandledRejection', (e) => console.error(e));
+
+// Hosting panels stop the process with SIGTERM: save pending changes before exiting.
+for (const sig of ['SIGTERM', 'SIGINT']) {
+  process.on(sig, () => {
+    try { store.flush(); } catch (e) { console.error(e); }
+    client.destroy();
+    process.exit(0);
+  });
+}
+
 client.login(TOKEN);
