@@ -2,7 +2,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 
 const FILE = path.resolve('data/db.json');
-export const db = { giveaways: {}, users: {} };
+export const db = { giveaways: {}, users: {}, guilds: {} };
 
 export function load() {
   fs.mkdirSync(path.dirname(FILE), { recursive: true });
