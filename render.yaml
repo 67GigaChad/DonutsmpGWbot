@@ -1,0 +1,30 @@
+# Render blueprint: https://render.com/docs/blueprint-spec
+# Deploy with Dashboard -> New -> Blueprint, then set DISCORD_TOKEN when prompted.
+services:
+  - type: web
+    name: donut-giveaway-bot
+    runtime: node
+    plan: free
+    buildCommand: npm ci --omit=dev
+    startCommand: npm start
+    healthCheckPath: /health
+    autoDeploy: true
+    envVars:
+      - key: NODE_VERSION
+        value: "22"
+      - key: NODE_ENV
+        value: production
+      - key: DISCORD_TOKEN
+        sync: false # set the real token in the Render dashboard, never in git
+      # - key: DEV_GUILD_ID
+      #   sync: false
+      # - key: KEEPALIVE_URL
+      #   sync: false # only needed if RENDER_EXTERNAL_URL isn't picked up
+
+    # Free instances can't have disks, so data/db.json is wiped on every
+    # deploy/restart. On a paid instance, uncomment this disk, set
+    # DATA_DIR=/var/data, and your giveaways/settings survive redeploys:
+    # disk:
+    #   name: data
+    #   mountPath: /var/data
+    #   sizeGB: 1

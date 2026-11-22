@@ -17,6 +17,30 @@ npm start
 
 The invite link is printed on startup. Create the bot at https://discord.com/developers/applications (no privileged intents needed) and turn on **Public Bot** if you want others to add it.
 
+## Deploy on Render (free tier)
+
+The bot runs a tiny health server on `PORT`, so it can be a **Web Service**:
+
+> **This is still a bot, not a website.** The HTTP listener exists only because Render's free plan doesn't offer free background workers; it answers Render's port/health check and keeps the instance awake. Everything the bot actually does happens over Discord's gateway.
+
+1. Push this repo to GitHub, then on Render: **New → Blueprint** and pick the repo (`render.yaml` is included). Or **New → Web Service** manually.
+2. Build command `npm ci --omit=dev`, start command `npm start`, health check path `/health`.
+3. Set `DISCORD_TOKEN` in the dashboard (never commit it), then deploy. The token is the only required setting.
+4. The bot self-pings `RENDER_EXTERNAL_URL` every 10 min so the free instance doesn't spin down after 15 min idle. For extra safety, point a free uptime monitor (UptimeRobot, cron-job.org) at `https://your-service.onrender.com/health` every 5–10 min.
+
+Endpoints: `/health` (liveness, always `200` while the process is up) and `/ready` (`200` once Discord is connected, `503` before that).
+
+If the deploy shows **Live** but the bot is offline, open the Render **Logs**. The usual cause is a missing/wrong `DISCORD_TOKEN`; the log now tells you exactly that.
+
+### Bot online but nothing happens?
+
+- **Slash commands missing?** Global commands can take up to ~1 hour to appear after the first deploy. For instant updates while testing, set `DEV_GUILD_ID` to your server ID (Developer Mode → right-click server → Copy Server ID), redeploy, and the commands register only for that server.
+- **Commands still missing?** Re-invite the bot using the link printed in the logs. It must include the `applications.commands` scope, not just `bot`.
+- **Bot shows online but can't post?** Give it View Channel, Send Messages, Embed Links and Read Message History in the giveaway/payment channels. `/giveaway start` checks this and tells you what's missing.
+- **Nothing in the logs at all?** The deploy failed before the bot started. Check the build log for `npm ci` errors.
+
+⚠️ Render's filesystem is ephemeral on the free plan: `data/db.json` (server settings, saved IGNs, running giveaways) is wiped on every deploy or restart. To keep data, use a paid instance with a disk mounted at `/var/data` and set `DATA_DIR=/var/data` (see the commented block in `render.yaml`).
+
 ## Commands
 
 | Command | What it does |

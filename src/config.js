@@ -1,11 +1,27 @@
-// .env is optional: on hosting panels just set DISCORD_TOKEN as an environment variable
-try { process.loadEnvFile(); } catch { /* no .env file */ }
-
+import fs from 'node:fs';
 import { parseEmoji } from './util.js';
+
+// .env is optional: on hosting panels just set DISCORD_TOKEN as an environment variable.
+// process.loadEnvFile() needs Node >= 20.12, so keep a tiny fallback for older Node.
+if (typeof process.loadEnvFile === 'function') {
+  try { process.loadEnvFile(); } catch { /* no .env file */ }
+} else {
+  try {
+    const text = fs.readFileSync(new URL('../.env', import.meta.url), 'utf8');
+    for (const line of text.split('\n')) {
+      if (/^\s*#/.test(line)) continue;
+      const m = /^\s*([\w.-]+)\s*=\s*(.*?)\s*$/.exec(line);
+      if (!m || !m[1] || m[1] in process.env) continue;
+      process.env[m[1]] = m[2].replace(/^(['"])(.*)\1$/, '$2');
+    }
+  } catch { /* no .env file */ }
+}
 
 export const TOKEN = process.env.DISCORD_TOKEN;
 if (!TOKEN || TOKEN.startsWith('put_your')) {
-  console.error('Missing DISCORD_TOKEN in .env');
+  console.error('Missing DISCORD_TOKEN.');
+  console.error('On Render: Dashboard → your service → Environment → add DISCORD_TOKEN, then redeploy.');
+  console.error('Locally: put DISCORD_TOKEN=your_token in .env.');
   process.exit(1);
 }
 

@@ -10,11 +10,18 @@ import {
   parseDuration, parseAmount, parseClaimTime, fmtAmount, fmtDuration, sosOutcome, shuffle, sleep, IGN_RE,
 } from './util.js';
 import { spin } from './roulette.js';
+import { startServer, startKeepAlive } from './server.js';
 
 const EPH = MessageFlags.Ephemeral;
 const client = new Client({ intents: [GatewayIntentBits.Guilds], allowedMentions: { parse: [] } });
 store.load();
 const db = store.db;
+
+// Health endpoint for Render/hosting panels (and to keep a free instance awake).
+startServer(() => ({ bot: client.isReady() ? client.user.tag : null, giveaways: Object.keys(db.giveaways).length }));
+startKeepAlive();
+console.log(`Data file: ${store.dataFile}`);
+
 const busy = new Set();
 
 /* ───────────────────────── commands ───────────────────────── */
@@ -911,11 +918,18 @@ client.on('interactionCreate', async (i) => {
 /* ───────────────────────── boot ───────────────────────── */
 
 client.once('clientReady', async () => {
-  console.log(`${DONUT} Logged in as ${client.user.tag}`);
+  console.log(`${DONUT} Logged in as ${client.user.tag} — in ${client.guilds.cache.size} server(s)`);
   const rest = new REST().setToken(TOKEN);
   const route = GUILD_ID ? Routes.applicationGuildCommands(client.user.id, GUILD_ID) : Routes.applicationCommands(client.user.id);
-  await rest.put(route, { body: commands.map((c) => c.toJSON()) });
-  console.log('Slash commands registered.');
+  try {
+    await rest.put(route, { body: commands.map((c) => c.toJSON()) });
+    console.log('Slash commands registered.');
+  } catch (e) {
+    console.error('Could not register slash commands:', e.message);
+  }
+  if (!GUILD_ID) {
+    console.log('Global slash commands can take up to ~1 hour to appear. Set DEV_GUILD_ID for instant updates while testing.');
+  }
   console.log(`Invite: ${client.generateInvite({
     scopes: ['bot', 'applications.commands'],
     permissions: [PermissionFlagsBits.ViewChannel, PermissionFlagsBits.SendMessages, PermissionFlagsBits.EmbedLinks, PermissionFlagsBits.ReadMessageHistory],
@@ -925,6 +939,8 @@ client.once('clientReady', async () => {
     if (g.status === 'drawing') draw(g, { resume: true }).catch(console.error);
   }
 });
+
+client.on('guildCreate', (guild) => console.log(`Added to server: ${guild.name} (${guild.id})`));
 
 client.on('guildDelete', (guild) => {
   delete db.guilds[guild.id];
@@ -941,5 +957,20 @@ setInterval(() => {
   store.save();
 }, 6 * 36e5);
 
+client.on('error', (e) => console.error('Discord client error:', e.message));
 process.on('unhandledRejection', (e) => console.error(e));
-client.login(TOKEN);
+
+// Hosting panels stop the process with SIGTERM: save pending changes before exiting.
+for (const sig of ['SIGTERM', 'SIGINT']) {
+  process.on(sig, () => {
+    try { store.flush(); } catch (e) { console.error(e); }
+    client.destroy();
+    process.exit(0);
+  });
+}
+
+client.login(TOKEN).catch((e) => {
+  console.error(`Discord login failed: ${e.message}`);
+  console.error('Check that DISCORD_TOKEN is correct (Render → Environment), then redeploy.');
+  process.exit(1);
+});
