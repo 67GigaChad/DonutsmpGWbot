@@ -5,13 +5,15 @@ services:
     name: donut-giveaway-bot
     runtime: node
     plan: free
-    buildCommand: npm install --omit=dev
+    buildCommand: npm ci --omit=dev
     startCommand: npm start
     healthCheckPath: /health
     autoDeploy: true
     envVars:
       - key: NODE_VERSION
         value: "22"
+      - key: NODE_ENV
+        value: production
       - key: DISCORD_TOKEN
         sync: false # set the real token in the Render dashboard, never in git
       # - key: DEV_GUILD_ID
@@ -20,8 +22,9 @@ services:
       #   sync: false # only needed if RENDER_EXTERNAL_URL isn't picked up
 
     # Free instances can't have disks, so data/db.json is wiped on every
-    # deploy/restart. Upgrade to a paid instance and uncomment to keep data:
+    # deploy/restart. On a paid instance, uncomment this disk, set
+    # DATA_DIR=/var/data, and your giveaways/settings survive redeploys:
     # disk:
     #   name: data
-    #   mountPath: /opt/render/project/src/data
+    #   mountPath: /var/data
     #   sizeGB: 1

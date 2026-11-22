@@ -1,16 +1,17 @@
 {
   "name": "donut-giveaway-bot",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "DonutSMP giveaway bot with roulette draw + auto payment requests",
   "type": "module",
-  "main": "src/index.js",
+  "main": "index.js",
   "scripts": {
-    "start": "node src/index.js"
+    "start": "node index.js"
   },
   "dependencies": {
     "discord.js": "^14.22.1"
   },
   "engines": {
     "node": ">=18"
-  }
+  },
+  "license": "MIT"
 }

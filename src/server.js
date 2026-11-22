@@ -4,16 +4,41 @@ import http from 'node:http';
 
 const PORT = Number(process.env.PORT) || 3000;
 
+const json = (res, code, body, method) => {
+  res.writeHead(code, { 'content-type': 'application/json', 'cache-control': 'no-store' });
+  res.end(method === 'HEAD' ? undefined : JSON.stringify(body));
+};
+
 export function startServer(status = () => ({})) {
   const server = http.createServer((req, res) => {
-    if (req.url === '/robots.txt') {
+    const method = req.method || 'GET';
+    const url = (req.url || '/').split('?')[0];
+
+    if (url === '/robots.txt') {
       res.writeHead(200, { 'content-type': 'text/plain' });
       return res.end('User-agent: *\nDisallow: /\n');
     }
-    if (req.url === '/' || req.url === '/health' || req.url === '/healthz') {
-      res.writeHead(200, { 'content-type': 'application/json' });
-      return res.end(JSON.stringify({ ok: true, uptime: Math.round(process.uptime()), ...status() }));
+
+    if (url === '/') {
+      // This is NOT a website: it exists only because Render's free plan only
+      // offers Web Services, so the bot needs something listening on PORT.
+      const text = 'DonutSMP Giveaway Bot is running.\nThis URL is only a health endpoint - the bot lives in Discord.\n';
+      res.writeHead(200, { 'content-type': 'text/plain; charset=utf-8' });
+      return res.end(method === 'HEAD' ? undefined : text);
     }
+
+    if (url === '/ready') {
+      // Readiness: 503 until Discord is actually connected. Keep /health as a
+      // liveness check so Render doesn't restart us while Discord is reconnecting.
+      const s = status();
+      const ready = Boolean(s.bot);
+      return json(res, ready ? 200 : 503, { ok: ready, uptime: Math.round(process.uptime()), ...s }, method);
+    }
+
+    if (url === '/health' || url === '/healthz') {
+      return json(res, 200, { ok: true, uptime: Math.round(process.uptime()), ...status() }, method);
+    }
+
     res.writeHead(404, { 'content-type': 'text/plain' });
     res.end('not found\n');
   });

@@ -22,7 +22,7 @@ async function edit(message, embed) {
 }
 
 /** Spins one roulette that is guaranteed to land on winnerIgn. */
-export async function spin({ message, prize, names, winnerIgn, index, total, locked }) {
+export async function spin({ message, prize, names, winnerIgn, index, total, locked, label = 'winner' }) {
   const base = shuffle(names);
   const n = base.length;
   const winIdx = base.indexOf(winnerIgn);
@@ -35,7 +35,7 @@ export async function spin({ message, prize, names, winnerIgn, index, total, loc
       .setTitle(`${DONUT}  DONUT ROULETTE  ${DONUT}`)
       .setDescription([
         ...(locked.length ? [...locked, ''] : []),
-        `${DONUT} Spinning for **winner ${index}/${total}** …`,
+        `${DONUT} Spinning for **${label} ${index}/${total}** …`,
         '```',
         renderBox(reel.slice(p, p + 5)),
         '```',
@@ -49,7 +49,7 @@ export async function spin({ message, prize, names, winnerIgn, index, total, loc
 
   const win = new EmbedBuilder()
     .setColor(COLORS.gold)
-    .setTitle(`🎉  WINNER #${index}  🎉`)
+    .setTitle(`🎉  ${label.toUpperCase()} #${index}  🎉`)
     .setDescription([...(locked.length ? [...locked, ''] : []), `## ${DONUT} ${winnerIgn} ${DONUT}`, '```', renderBox(reel.slice(FRAMES - 1, FRAMES + 4)), '```'].join('\n'))
     .addFields({ name: 'Prize', value: prize });
   await edit(message, win);
